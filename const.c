@@ -15,7 +15,7 @@ ssize_t readln(int fildes, char *buf, size_t nbyte){
 	return i;
 }
 
-void ex11(char* arg){
+void cons(char* arg){
 	char buf[1024];
 	int r;
 	while((r = readln(0, buf, 1024))>1){
@@ -29,5 +29,5 @@ void ex11(char* arg){
 
 void main(int argc, char* argv[]){
 	if(!strcmp(argv[1], "const"))
-		ex11(argv[2]);
+		cons(argv[2]);
 }

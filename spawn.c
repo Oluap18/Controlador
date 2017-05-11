@@ -16,7 +16,7 @@ ssize_t readln(int fildes, char *buf, size_t nbyte){
 	return i;
 }
 
-void ex14(int argc, char* argv[]){
+void spawn(int argc, char* argv[]){
 	char *args[1024], buf[1024], *aux[1024], *coluna;
 	int r,i=0, j, k, col, status;
 	
@@ -40,7 +40,8 @@ void ex14(int argc, char* argv[]){
 				}
 			}
 			execvp(argv[0], argv);
-			perror("ERRO");
+			perror("ERRO: Comando inválido.");
+			_exit(-1);
 		}
 		
 		wait(&status);
@@ -54,5 +55,5 @@ void ex14(int argc, char* argv[]){
 
 void main(int argc, char* argv[]){
 	if(!strcmp(argv[1], "spawn"))
-		ex14(argc-2, &argv[2]);
+		spawn(argc-2, &argv[2]);
 }

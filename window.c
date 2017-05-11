@@ -15,7 +15,7 @@ ssize_t readln(int fildes, char *buf, size_t nbyte){
 	return i;
 }
 
-int window(char* cmd, int linhas, int* valores, int j){
+int calc(char* cmd, int linhas, int* valores, int j){
 	int i;
 	int res=0;
 	if((j-linhas)<0)
@@ -58,7 +58,7 @@ int window(char* cmd, int linhas, int* valores, int j){
 	return 0;
 }
 
-void ex13(char* coluna, char* cmd, char* linha){
+void window(char* coluna, char* cmd, char* linha){
 	char *args[1024], buf[1024], *aux[1024], resultado[1024];
 	int n, i, col = atoi(coluna), lin = atoi(linha),j,k, v=0;
 	while((n = readln(0, buf, 1024))>1){
@@ -74,7 +74,7 @@ void ex13(char* coluna, char* cmd, char* linha){
 		val[v++] = atoi(aux[col-1]);
 	}
 	for(j=0;j<i;j++){
-		sprintf(resultado, "%d", window(cmd, lin, val, j));
+		sprintf(resultado, "%d", calc(cmd, lin, val, j));
 		strcat(args[j], ":");
 		strcat(args[j],resultado);
 		strcat(args[j], "\n");
@@ -84,5 +84,5 @@ void ex13(char* coluna, char* cmd, char* linha){
 
 void main(int argc, char* argv[]){
 	if(!strcmp(argv[1], "window"))
-		ex13(argv[2], argv[3], argv[4]);
+		window(argv[2], argv[3], argv[4]);
 }
