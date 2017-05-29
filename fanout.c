@@ -17,7 +17,7 @@ ssize_t readln(int fildes, char *buf, size_t nbyte){
 }
 
 void fanout(int argc, char* argv[]){
-	int pipp[2], pipf[2], pippr[argc-1], pippw[argc-1];
+	int pipp[2], pipf[2], pipr[argc-1], pipw[argc-1];
 	pipe(pipp);
 	char buffer[1024];
 	int c,n;
@@ -26,35 +26,34 @@ void fanout(int argc, char* argv[]){
 		dup2(pipp[1],1);
 		close(pipp[1]);
 		execlp(argv[0], argv[0], NULL);
+		perror("Comando inválido.");
 		exit(-1);
 	}
-	for(int i=1;i<argc;i++){
+	close(pipp[1]);
+	for(int i=0;i<argc-1;i++){
 		pipe(pipf);
-		pippr[i-1] = pipf[0];
-		pippw[i-1] = pipf[1];
+		pipr[i] = pipf[0];
+		pipw[i] = pipf[1];
 	}
 	while((c =read(pipp[0], buffer, 1024))){
-		for(int i=0;i<argc-1;i++){
-			write(pippw[i], buffer, c);
-			close(pippw[i]);
-		}
+		for(int i=0;i<argc-1;i++)
+			write(pipw[i], buffer, c);
 		for(int n=0;n<argc-1;n++){
+			close(pipw[n]);
 			if(fork()==0){
-				dup2(pippr[n], 0);
-				close(pippr[n]);
+				dup2(pipr[n], 0);
+				close(pipr[n]);
 				execlp(argv[n+1], argv[n+1], NULL);
 				perror("Comando inválido.");
 				_exit(-1);
 			}
+			close(pipr[n]);
 		}
 	}
-	for(int i=0;i<argc-1;i++){
-		close(pippr[i]);
-		close(pippw[i]);
-	}
 	close(pipp[0]);
-	for(int i=0;i<argc;i++)
+	for(int i=0; i< argc; i++){
 		wait(NULL);
+	}
 }
 
 void main(int argc, char* argv[]){

@@ -83,6 +83,5 @@ void window(char* coluna, char* cmd, char* linha){
 }
 
 void main(int argc, char* argv[]){
-	if(!strcmp(argv[1], "window"))
-		window(argv[2], argv[3], argv[4]);
+	window(argv[2], argv[3], argv[4]);
 }

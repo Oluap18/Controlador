@@ -49,6 +49,5 @@ void filter(char* col1, char* op, char* col2){
 }
 
 void main(int argc, char* argv[]){
-	if(!strcmp(argv[1], "filter"))
 		filter(argv[2], argv[3], argv[4]);
 }

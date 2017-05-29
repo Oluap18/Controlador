@@ -28,6 +28,5 @@ void cons(char* arg){
 }
 
 void main(int argc, char* argv[]){
-	if(!strcmp(argv[1], "const"))
-		cons(argv[2]);
+	cons(argv[2]);
 }

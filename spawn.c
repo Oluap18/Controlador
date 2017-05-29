@@ -54,6 +54,5 @@ void spawn(int argc, char* argv[]){
 }
 
 void main(int argc, char* argv[]){
-	if(!strcmp(argv[1], "spawn"))
-		spawn(argc-2, &argv[2]);
+	spawn(argc-2, &argv[2]);
 }
