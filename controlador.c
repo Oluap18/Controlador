@@ -56,10 +56,28 @@ Nodo initNodo(int id, char** cm){
 		int r;
 		char** comand;
 		if(!strcmp("const", n -> cmd[0])){
-			comand = (char**) malloc(sizeof(char[1024])*10);
+			comand = (char**) malloc(sizeof(char[1024])*4);
 			comand[0] = strdup("./const");
 			comand[2] = strdup(n -> cmd[1]);
 			comand[3] = NULL;
+		}
+		if(!strcmp("filter", n -> cmd[0])){
+			comand = (char**) malloc(sizeof(char[1024])*6);
+			comand[0] = strdup("./filter");
+			comand[2] = strdup(n -> cmd[1]);
+			comand[3] = strdup(n -> cmd[2]);
+			comand[4] = strdup(n -> cmd[3]);
+			comand[5] = NULL;
+		}
+		if(!strcmp("spawn", n -> cmd[0])){
+			int i = 2;
+			comand = (char**) malloc(sizeof(char[1024])*10);
+			comand[0] = strdup("./spawn");
+			while(n -> cmd[i-1] != NULL ){
+				comand[i] = strdup( n -> cmd[i-1]);
+				i++;
+			}
+			comand[i] = NULL;
 		}
 		close(n->pipe[1]);
 		while((r=readln( n->pipe[0], buffer, 1024 ))){
@@ -73,81 +91,6 @@ Nodo initNodo(int id, char** cm){
 		}
 	}
 	return n;
-}
-
-
-
-void fanin(int argc, char* argv[]){
-	int pipp[2], pipf[2], pipw[argc-1], pipr[argc-1];
-	pipe(pipp);
-	int i;
-	for(i=0;i<argc-1;i++){
-		pipe(pipf);
-		pipr[i] = pipf[0];
-		pipw[i] = pipf[1];
-	}
-	for(i=0;i<argc-1;i++){
-		if(fork()==0){
-			dup2(pipw[i], 1);
-			close(pipw[i]);
-			execlp(argv[i], argv[i], NULL);
-			perror("Comando inválido.");
-			_exit(-1);
-		}
-		wait(NULL);
-		close(pipw[i]);
-		if(fork()==0){
-			dup2(pipr[i], 0);
-			close(pipr[i]);
-			execlp(argv[argc-1], argv[argc-1], NULL);
-			perror("Comando inválido.");
-			_exit(-1);
-		}
-		close(pipr[i]);
-		wait(NULL);
-	}
-}
-
-
-
-void fanout(int argc, char* argv[]){
-	int pipp[2], pipf[2], pipr[argc-1], pipw[argc-1];
-	pipe(pipp);
-	char buffer[1024];
-	int c,n;
-	if(fork()==0){
-		close(pipp[0]);
-		dup2(pipp[1],1);
-		close(pipp[1]);
-		execlp(argv[0], argv[0], NULL);
-		perror("Comando inválido.");
-		exit(-1);
-	}
-	close(pipp[1]);
-	for(int i=0;i<argc-1;i++){
-		pipe(pipf);
-		pipr[i] = pipf[0];
-		pipw[i] = pipf[1];
-	}
-	while((c =read(pipp[0], buffer, 1024))){
-		for(int i=0;i<argc-1;i++)
-			write(pipw[i], buffer, c);
-		for(int n=0;n<argc-1;n++){
-			close(pipw[n]);
-			if(fork()==0){
-				dup2(pipr[n], 0);
-				close(pipr[n]);
-				execlp(argv[n+1], argv[n+1], NULL);
-				perror("Comando inválido.");
-				_exit(-1);
-			}
-			close(pipr[n]);
-		}
-	}
-	close(pipp[0]);
-	for(int i=0; i< argc; i++){
-		wait(NULL);
-	}
 }
 
 

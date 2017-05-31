@@ -18,7 +18,6 @@ ssize_t readln(int fildes, char *buf, size_t nbyte){
 
 
 void main(int argc, char* argv[]){
-	//spawn(argc-2, &argv[2]);
 	char args[1024], buf[1024], *aux[1024], *coluna;
 	int r,i=0, j, k, col, status;
 	strcpy(buf, argv[1]);

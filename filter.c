@@ -32,6 +32,9 @@ int parse(char* op, int val1, int val2){
 	return 0;
 }
 
+/**
+*	Primeiro vem o input, depois a coluna 1, o operador a comparar, e a coluna 2
+*/
 void main(int argc, char* argv[]){
 	char buf[1024], temp[1024];
 	char* cmd[1024];
