@@ -12,8 +12,6 @@ struct nodo{
 	int sizeW;
 	char** cmd;
 	int pipe[2];
-	char** input;
-	int inp_point;
 };
 
 typedef struct nodo* Nodo;
@@ -38,7 +36,10 @@ void rem(int* arr, int p, int size){
 }
 
 
-
+/**
+*	Caso o comando seja window, será guardado os inputs num array de chars, com o
+* tamanho do número de linhas a analizar. Aí, irá guardar inputs de operações anteriores.
+*/
 Nodo initNodo(int id, char** cm){
 	Nodo n = (Nodo) malloc(sizeof(struct nodo));
 	pipe(n->pipe);
@@ -47,10 +48,8 @@ Nodo initNodo(int id, char** cm){
 	n -> sizeW = 0;
 	n -> cmd = (char**) malloc(sizeof(char*)*10);
 	n -> cmd = cm;
-	if(!strcmp("window", cm[0]))
-		n -> input = (char**) malloc(sizeof(char[1024])*atoi(cm[3]));
-	else n-> input = (char**) malloc(sizeof(char[1024])*1);
-	n -> inp_point = 0;
+	char** input;
+	int inp_count=0;
 	if(fork()==0){
 		char buffer[1024];
 		int r;
@@ -71,7 +70,7 @@ Nodo initNodo(int id, char** cm){
 		}
 		if(!strcmp("spawn", n -> cmd[0])){
 			int i = 2;
-			comand = (char**) malloc(sizeof(char[1024])*10);
+			comand = (char**) malloc(sizeof(char[1024])*16);
 			comand[0] = strdup("./spawn");
 			while(n -> cmd[i-1] != NULL ){
 				comand[i] = strdup( n -> cmd[i-1]);
@@ -79,15 +78,44 @@ Nodo initNodo(int id, char** cm){
 			}
 			comand[i] = NULL;
 		}
+		if(!strcmp("window", n -> cmd[0])){
+			comand = (char**) malloc(sizeof(char[1024])*atoi(cm[3])+6);
+			comand[0] = strdup("./window");
+			comand[2] = strdup( n-> cmd[1] );
+			comand[3] = strdup( n-> cmd[2] );
+			comand[4] = strdup( n-> cmd[3] );
+
+		}
 		close(n->pipe[1]);
 		while((r=readln( n->pipe[0], buffer, 1024 ))){
+			int i;
+			inp_count++;
+			char aux[10];
 			buffer[r] = '\0';
-			comand[1] = strdup(buffer);
+			if(!strcmp("window", n -> cmd[0])){
+				if(inp_count-2 != atoi(cm[3])){
+					sprintf(aux, "%d", inp_count);
+					comand[1] = aux;
+					for(i = inp_count+3; i > inp_count ; i--){
+						comand[i+1] = comand[i];
+					}
+					comand[inp_count+5] = NULL;
+					comand[inp_count+1] = strdup(buffer);
+				}
+				else{
+					comand[2] = comand[3];
+					comand[3] = comand[4];
+					comand[4] = strdup(buffer);
+					inp_count--;
+				}
+			}
+			else comand[1] = strdup(buffer);
 			if(fork()==0){
 				execvp(comand[0], comand);
 				perror("Comando inválido.");
 				exit(-1);
 			}
+			wait(NULL);
 		}
 	}
 	return n;

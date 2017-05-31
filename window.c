@@ -73,7 +73,7 @@ int calc(char* cmd, int linhas, int* valores, int j){
 void main(int argc, char* argv[]){
 	int i=0, k, j;
 	int n_input = atoi(argv[1]), coluna = atoi(argv[n_input+2]), linha = atoi(argv[n_input+4]);
-	char** input = (char**)malloc(sizeof(char[1024])*64);
+	char** input = (char**)malloc(sizeof(char[1024])*linha+1);
 	char *aux[1024], cmd[1024], buf[1024], resultado[1024];
 	int val[n_input];
 	strcpy(cmd, argv[n_input+3]);
@@ -85,7 +85,8 @@ void main(int argc, char* argv[]){
 		aux[j] = strtok(buf, ":\0");
 		while(aux[j]!=NULL)
 			aux[++j] = strtok(NULL, ":\0");
-		val[i++] = atoi(aux[coluna-1]);
+		if(coluna > j) val[i++] = 0;
+		else val[i++] = atoi(aux[coluna-1]);
 	}
 	sprintf(resultado, "%d", calc(cmd, linha, val, n_input-1));
 	strcat(input[n_input-1], ":");
