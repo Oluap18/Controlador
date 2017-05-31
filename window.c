@@ -15,6 +15,9 @@ ssize_t readln(int fildes, char *buf, size_t nbyte){
 	return i;
 }
 
+/**
+*
+*/
 int calc(char* cmd, int linhas, int* valores, int j){
 	int i;
 	int res=0;
@@ -58,30 +61,35 @@ int calc(char* cmd, int linhas, int* valores, int j){
 	return 0;
 }
 
-void window(char* coluna, char* cmd, char* linha){
-	char *args[1024], buf[1024], *aux[1024], resultado[1024];
-	int n, i, col = atoi(coluna), lin = atoi(linha),j,k, v=0;
-	while((n = readln(0, buf, 1024))>1){
-		buf[n]= '\0';
-		args[i++] = strdup(buf);
+/**
+*	Primeiro argumento, número de linhas do input, segundo argumento
+* o input, terceiro argumento, coluna a comparar, quarto argumento comando
+* a executar, quinto argumento, linhas a comparar
+* aux serve como auxiliar para separar os argumentos em :
+* val contêm os valores da coluna que estamos a calcular
+* input contêm os inputs
+* buf serve como auxiliar para separar os argumentos do input
+*/
+void main(int argc, char* argv[]){
+	int i=0, k, j;
+	int n_input = atoi(argv[1]), coluna = atoi(argv[n_input+2]), linha = atoi(argv[n_input+4]);
+	char** input = (char**)malloc(sizeof(char[1024])*64);
+	char *aux[1024], cmd[1024], buf[1024], resultado[1024];
+	int val[n_input];
+	strcpy(cmd, argv[n_input+3]);
+	for(j=0; j< n_input; j++){
+		input[j]=strdup(argv[j+2]);
 	}
-	int val[i];
-	for(j=0, k=0; k < i; k++){
-		strcpy(buf , args[k]);
+	for(j=0, k=0; k < n_input; k++){
+		strcpy(buf , input[k]);
 		aux[j] = strtok(buf, ":\0");
 		while(aux[j]!=NULL)
 			aux[++j] = strtok(NULL, ":\0");
-		val[v++] = atoi(aux[col-1]);
+		val[i++] = atoi(aux[coluna-1]);
 	}
-	for(j=0;j<i;j++){
-		sprintf(resultado, "%d", calc(cmd, lin, val, j));
-		strcat(args[j], ":");
-		strcat(args[j],resultado);
-		strcat(args[j], "\n");
-		write(1, args[j], strlen(args[j]));
-	}
-}
-
-void main(int argc, char* argv[]){
-	window(argv[2], argv[3], argv[4]);
+	sprintf(resultado, "%d", calc(cmd, linha, val, n_input-1));
+	strcat(input[n_input-1], ":");
+	strcat(input[n_input-1],resultado);
+	strcat(input[n_input-1], "\n");
+	write(1, input[n_input-1], strlen(input[n_input-1]));
 }

@@ -9,11 +9,11 @@
 struct nodo{
 	int id;
 	int* writer;
-	int* reader;
 	int sizeW;
-	int sizeR;
 	char** cmd;
-	int[2] pipe;
+	int pipe[2];
+	char** input;
+	int inp_point;
 };
 
 typedef struct nodo* Nodo;
@@ -23,24 +23,55 @@ typedef struct nodo* Nodo;
 ssize_t readln(int fildes, char *buf, size_t nbyte){
 	int i=0;
 	int n;
-	while(i<nbyte && (n = read(fildes, buf+i, 1))>0 && *(buf+i)!='\n')
+	while(i<nbyte && (n = read(fildes, buf+i, 1))>0 && *(buf+i)!='\n' && *(buf+i)!='\0'){
 		i++;
+		buf[i]='\0';
+	}
 	if(n<0) return n;
 	return i;
+}
+
+void rem(int* arr, int p, int size){
+	int i;
+	for(i=p; i < size; i++)
+		arr[i] = arr[i+1];
 }
 
 
 
 Nodo initNodo(int id, char** cm){
 	Nodo n = (Nodo) malloc(sizeof(struct nodo));
+	pipe(n->pipe);
 	n -> id = id;
 	n -> writer = (int*) malloc(sizeof(int)*10);
 	n -> sizeW = 0;
-	n -> reader = (int*) malloc(sizeof(int)*10);
-	n -> sizeR = 0;
 	n -> cmd = (char**) malloc(sizeof(char*)*10);
 	n -> cmd = cm;
-	pipe(n->pipe);
+	if(!strcmp("window", cm[0]))
+		n -> input = (char**) malloc(sizeof(char[1024])*atoi(cm[3]));
+	else n-> input = (char**) malloc(sizeof(char[1024])*1);
+	n -> inp_point = 0;
+	if(fork()==0){
+		char buffer[1024];
+		int r;
+		char** comand;
+		if(!strcmp("const", n -> cmd[0])){
+			comand = (char**) malloc(sizeof(char[1024])*10);
+			comand[0] = strdup("./const");
+			comand[2] = strdup(n -> cmd[1]);
+			comand[3] = NULL;
+		}
+		close(n->pipe[1]);
+		while((r=readln( n->pipe[0], buffer, 1024 ))){
+			buffer[r] = '\0';
+			comand[1] = strdup(buffer);
+			if(fork()==0){
+				execvp(comand[0], comand);
+				perror("Comando inválido.");
+				exit(-1);
+			}
+		}
+	}
 	return n;
 }
 
@@ -125,7 +156,6 @@ void fanout(int argc, char* argv[]){
 void connect(Nodo* nodos, int id, char** ids){
 	int i=0;
 	Nodo nodo = nodos[id];
-	int pipe[2] = nodo -> pipe;
 	while(ids[i] != NULL){
 		if(nodo -> sizeW%10 == 0 && nodo -> sizeW != 0)
 			nodo -> writer = (int*) realloc(nodo->writer,sizeof(int)*(nodo -> sizeW + 10));
@@ -133,12 +163,6 @@ void connect(Nodo* nodos, int id, char** ids){
 		nodo -> writer[nodo -> sizeW] = outro -> pipe[0];
 		nodo -> sizeW++;
 		i++;
-	}
-	for(i=0; ids[i] != NULL; i++){
-		nodo = nodos[atoi(ids[i])];
-		nodo -> reader[nodo -> sizeR] = pipe[1];
-		printf("%d -> %d\n", atoi(ids[i]), nodo -> reader[nodo -> sizeR]);
-		nodo -> sizeR++;
 	}
 }
 
@@ -150,37 +174,9 @@ void disconnect(Nodo* nodos, int id, int id2){
 	Nodo n2 = nodos[id2];
 	for(i=0; i < n -> sizeW; i++){
 		if(n -> writer[i] == n2 -> pipe[0]){
-			remove(n -> writer[i], i, n -> sizeW);
+			rem(n -> writer, i, n -> sizeW);
 			n -> sizeW--;
 		}
-	}
-	for(i=0; i < n2 -> sizeR; i++){
-		if(n2 -> reader[i] == n -> pipe[1]){
-			remove(n2 -> reader[i], i, n2 -> sizeR);
-			n2 -> sizeR--;
-		}
-	}
-}
-
-
-
-void remove(int* arr, int p, int size){
-	int i;
-	for(i=p; i < size; i++)
-		arr[i] = arr[i+1];
-}
-
-
-
-void cons(char* arg){
-	char buf[1024];
-	int r;
-	while((r = readln(0, buf, 1024))>1){
-		buf[r]= '\0';
-		strcat(buf, ":");
-		strcat(buf, arg);
-		strcat(buf, "\n");
-		write(1, buf, strlen(buf));
 	}
 }
 
@@ -207,16 +203,19 @@ int main(){
 		if(!strcmp(cmd[0], "node")){
 			if(size%10==0 && size != 10)
 				nodos = (Nodo*) realloc(nodos,sizeof(struct nodo)*(size+10));
-			nodos[atoi(cmd[1])] = initNodo(atoi(cmd[1]), &cmd[2])
-			i=0;
-			while(nodos[atoi(cmd[1])] -> cmd[i]!=NULL){
-				printf("%s\n", nodos[atoi(cmd[1])] -> cmd[i]);
-				i++;
-			}
+			nodos[atoi(cmd[1])] = initNodo(atoi(cmd[1]), &cmd[2]);
 			size++;
 		}
 		if(!strcmp(cmd[0], "connect")){
 			connect(nodos, atoi(cmd[1]), &cmd[2]);
+		}
+		if(!strcmp(cmd[0], "inject")){
+			Nodo nodo = nodos[atoi(cmd[1])];
+			i=2;
+			while( cmd[i] != NULL ){
+				write( nodo-> pipe[1] , cmd[i], strlen(cmd[i])+1);
+				i++;
+			}
 		}
 	}
 }
