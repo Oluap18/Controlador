@@ -1,4 +1,19 @@
-a:3:x:4
-b:1:y:10
-a:2:w:2
-d:5:z:34
+node 0 const 10
+node 1 const 20
+node 2 const 30
+node 3 const 40
+node 4 window 4 avg 3
+node 5 const 50
+node 6 const 60
+connect 5 6
+inject 5 x
+connect 0 1 2 3
+connect 1 4
+connect 2 3
+connect 2 4
+connect 3 4
+inject 0 x:10
+disconnect 0 3
+inject 0 x:10
+disconnect 5 6
+inject 5 x

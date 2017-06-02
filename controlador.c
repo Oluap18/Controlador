@@ -28,7 +28,6 @@ ssize_t readln(int fildes, char *buf, size_t nbyte){
 		i++;
 		buf[i]='\0';
 	}
-	if(n<0) return n;
 	return i;
 }
 
@@ -87,7 +86,7 @@ Nodo initNodo(int id, char** cm){
 			comand[2] = strdup(n -> cmd[1]);
 			comand[3] = NULL;
 		}
-		if(!strcmp("filter", n -> cmd[0])){
+		else if(!strcmp("filter", n -> cmd[0])){
 			comand = (char**) malloc(sizeof(char[1024])*6);
 			comand[0] = strdup("./filter");
 			comand[2] = strdup(n -> cmd[1]);
@@ -95,7 +94,7 @@ Nodo initNodo(int id, char** cm){
 			comand[4] = strdup(n -> cmd[3]);
 			comand[5] = NULL;
 		}
-		if(!strcmp("spawn", n -> cmd[0])){
+		else if(!strcmp("spawn", n -> cmd[0])){
 			int i = 2;
 			comand = (char**) malloc(sizeof(char[1024])*16);
 			comand[0] = strdup("./spawn");
@@ -105,13 +104,21 @@ Nodo initNodo(int id, char** cm){
 			}
 			comand[i] = NULL;
 		}
-		if(!strcmp("window", n -> cmd[0])){
+		else if(!strcmp("window", n -> cmd[0])){
 			comand = (char**) malloc(sizeof(char[1024])*atoi(cm[3])+6);
 			comand[0] = strdup("./window");
 			comand[2] = strdup( n-> cmd[1] );
 			comand[3] = strdup( n-> cmd[2] );
 			comand[4] = strdup( n-> cmd[3] );
-
+		}
+		else{
+			int i=0;
+			comand = (char**) malloc(sizeof(char[1024])*16);
+			while(n -> cmd[i-1] != NULL ){
+				comand[i] = strdup( n -> cmd[i]);
+				i++;
+			}
+			comand[i] = NULL;
 		}
 		close(n->pipe[1]);
 		while((r=readln( n->pipe[0], buffer, 1024 ))){
@@ -121,7 +128,6 @@ Nodo initNodo(int id, char** cm){
 			if(buffer[0]!='+' && buffer[0]!='-'){
 				inp_count++;
 				char aux[10];
-				buffer[r] = '\0';
 				if(!strcmp("window", n -> cmd[0])){
 					if(inp_count-2 != atoi(cm[3])){
 						sprintf(aux, "%d", inp_count);
@@ -152,6 +158,8 @@ Nodo initNodo(int id, char** cm){
 					write(pipM[1], fanOut, strlen(fanOut)+1);
 				}
 				if(fork()==0){
+					if(!strcmp(n-> cmd[0], "spawn"))
+						dup2(n->pipe[0], 0);
 					if(n->sizeW!=0){
 						close(n->pipeAux[0]);
 						dup2(n->pipeAux[1], 1);
@@ -205,6 +213,7 @@ Nodo initNodo(int id, char** cm){
 				}
 			}
 		}
+		exit(1);
 	}
 	return n;
 }
@@ -227,6 +236,7 @@ void connect(Nodo* nodos, int id, char** ids){
 		i++;
 	}
 	write(nodo->pipe[1], buffer, strlen(buffer)+1);
+	return ;
 }
 
 
@@ -243,8 +253,8 @@ void disconnect(Nodo* nodos, int id, int id2){
 	sprintf(aux, "%d", n2 -> pipe[1]);
 	strcat(buffer, " ");
 	strcat(buffer, aux);
-	printf("%s\n", buffer);
 	write(n->pipe[1], buffer, strlen(buffer)+1);
+	return ;
 }
 
 
@@ -272,14 +282,17 @@ int main(){
 				nodos[atoi(cmd[1])] = initNodo(atoi(cmd[1]), &cmd[2]);
 				size++;
 				if(pid!=0)
-					kill(pid, 9);
+					write(pipM[1], "\0 ", 1);
 				pid=fork();
-				if(pid==0) fanout();
+				if(pid==0){
+					fanout();
+					exit(1);
+				}
 			}
-			if(!strcmp(cmd[0], "connect")){
+			else if(!strcmp(cmd[0], "connect")){
 				connect(nodos, atoi(cmd[1]), &cmd[2]);
 			}
-			if(!strcmp(cmd[0], "inject")){
+			else if(!strcmp(cmd[0], "inject")){
 				Nodo nodo = nodos[atoi(cmd[1])];
 				i=2;
 				while( cmd[i] != NULL ){
@@ -287,7 +300,7 @@ int main(){
 					i++;
 				}
 			}
-			if(!strcmp(cmd[0], "disconnect")){
+			else if(!strcmp(cmd[0], "disconnect")){
 				disconnect(nodos, atoi(cmd[1]), atoi(cmd[2]));
 			}
 		}
@@ -296,7 +309,6 @@ int main(){
 		if(buffer[0]=='y' || c==0)
 			break;
 	}
-	sleep(1);
 	for(i=0; i < size; i++){
 		close(nodos[i] -> pipe[1]);
 		close(nodos[i] -> pipe[0]);

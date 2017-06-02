@@ -6,17 +6,10 @@
 #include <sys/wait.h>
 #include <fcntl.h> 
 
-ssize_t readln(int fildes, char *buf, size_t nbyte){
-	int i=0;
-	int n;
-	while(i<nbyte && (n = read(fildes, buf+i, 1))>0 && *(buf+i)!='\n')
-		i++;
-	if(n<0) return n;
-	return i;
-}
 
 /**
-*
+*	primeiro vem o comando a executar, depois o número de linhas a comparar
+* , os valores das colunas a comparar e a posição da linha a calcular
 */
 int calc(char* cmd, int linhas, int* valores, int j){
 	int i;
@@ -82,9 +75,9 @@ void main(int argc, char* argv[]){
 	}
 	for(j=0, k=0; k < n_input; k++){
 		strcpy(buf , input[k]);
-		aux[j] = strtok(buf, ":\0");
+		aux[j] = strtok(buf, ":\n\0");
 		while(aux[j]!=NULL)
-			aux[++j] = strtok(NULL, ":\0");
+			aux[++j] = strtok(NULL, ":\n\0");
 		if(coluna > j) val[i++] = 0;
 		else val[i++] = atoi(aux[coluna-1]);
 	}

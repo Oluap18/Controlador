@@ -6,14 +6,6 @@
 #include <sys/wait.h>
 #include <fcntl.h> 
 
-ssize_t readln(int fildes, char *buf, size_t nbyte){
-	int i=0;
-	int n;
-	while(i<nbyte && (n = read(fildes, buf+i, 1))>0 && *(buf+i)!='\n')
-		i++;
-	if(n<0) return n;
-	return i;
-}
 
 int parse(char* op, int val1, int val2){
 	if(!strcmp(op, "<"))
@@ -43,9 +35,9 @@ void main(int argc, char* argv[]){
 	i=0;
 	strcpy(temp, buf);
 	strcat(temp, "\n");
-	cmd[i] = strtok(buf, ":\n");
+	cmd[i] = strtok(buf, ":\n\0");
 	while(cmd[i]!=NULL)
-		cmd[++i] = strtok(NULL, ":\n");
+		cmd[++i] = strtok(NULL, ":\n\0");
 	if(parse(argv[3], atoi(cmd[coluna1-1]), atoi(cmd[coluna2-1])))
 		write(1, temp, strlen(temp));
 	write(1, "\0 ", 1);
