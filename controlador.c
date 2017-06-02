@@ -72,6 +72,7 @@ Nodo initNodo(int id, char** cm){
 	n -> sizeW = 0;
 	n -> cmd = (char**) malloc(sizeof(char*)*10);
 	n -> cmd = cm;
+	char ficheiro[1024];
 	char** input;
 	int inp_count=0;
 	if(fork()==0){
@@ -85,6 +86,10 @@ Nodo initNodo(int id, char** cm){
 			comand[0] = strdup("./const");
 			comand[2] = strdup(n -> cmd[1]);
 			comand[3] = NULL;
+			if( n -> cmd[2] != NULL)
+				strcpy(ficheiro, n -> cmd[2]);
+			else
+				strcpy(ficheiro, "output.txt");
 		}
 		else if(!strcmp("filter", n -> cmd[0])){
 			comand = (char**) malloc(sizeof(char[1024])*6);
@@ -93,16 +98,26 @@ Nodo initNodo(int id, char** cm){
 			comand[3] = strdup(n -> cmd[2]);
 			comand[4] = strdup(n -> cmd[3]);
 			comand[5] = NULL;
+			if( n -> cmd[4] != NULL)
+				strcpy(ficheiro, n -> cmd[4]);
+			else
+				strcpy(ficheiro, "output.txt");
 		}
 		else if(!strcmp("spawn", n -> cmd[0])){
 			int i = 2;
 			comand = (char**) malloc(sizeof(char[1024])*16);
 			comand[0] = strdup("./spawn");
 			while(n -> cmd[i-1] != NULL ){
+				if( !strcmp(n -> cmd[i-1], "[" ))
+					break;
 				comand[i] = strdup( n -> cmd[i-1]);
 				i++;
 			}
 			comand[i] = NULL;
+			if( n -> cmd[i] != NULL)
+				strcpy(ficheiro, n -> cmd[i]);
+			else
+				strcpy(ficheiro, "output.txt");
 		}
 		else if(!strcmp("window", n -> cmd[0])){
 			comand = (char**) malloc(sizeof(char[1024])*atoi(cm[3])+6);
@@ -110,6 +125,10 @@ Nodo initNodo(int id, char** cm){
 			comand[2] = strdup( n-> cmd[1] );
 			comand[3] = strdup( n-> cmd[2] );
 			comand[4] = strdup( n-> cmd[3] );
+			if( n -> cmd[4] != NULL)
+				strcpy(ficheiro, n -> cmd[4]);
+			else
+				strcpy(ficheiro, "output.txt");
 		}
 		else{
 			int i=0;
@@ -166,7 +185,7 @@ Nodo initNodo(int id, char** cm){
 						close(n->pipeAux[1]);
 					}
 					else{
-						int fd = open("output.txt", O_CREAT | O_WRONLY | O_APPEND, 0666);
+						int fd = open(ficheiro, O_CREAT | O_WRONLY | O_APPEND, 0666);
 						sprintf(sp, "%d", id);
 						dup2(fd, 1);
 						close(fd);
