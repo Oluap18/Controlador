@@ -1,2 +1,6 @@
-node 0 window 4 avg 2
-inject 0 a:3:x:4 b:1:y:10 a:2:w:2 d:5:z:34 b:0
+node 0 const 10
+node 1 const 69
+node 2 filter 2 < 4
+connect 0 1
+connect 1 2
+inject 0 x:10

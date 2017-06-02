@@ -46,4 +46,6 @@ void main(int argc, char* argv[]){
 	strcat(args, buf);
 	strcat(args, "\n");
 	write(1, args, strlen(args));
+	write(1, "\n", 1);
+	exit(0);
 }

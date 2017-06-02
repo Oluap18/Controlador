@@ -93,4 +93,6 @@ void main(int argc, char* argv[]){
 	strcat(input[n_input-1],resultado);
 	strcat(input[n_input-1], "\n");
 	write(1, input[n_input-1], strlen(input[n_input-1]));
+	write(1, "\n", 1);
+	exit(0);
 }
