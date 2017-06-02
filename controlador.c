@@ -157,6 +157,15 @@ Nodo initNodo(int id, char** cm){
 						dup2(n->pipeAux[1], 1);
 						close(n->pipeAux[1]);
 					}
+					else{
+						int fd = open("output.txt", O_CREAT | O_WRONLY | O_APPEND, 0666);
+						sprintf(sp, "%d", id);
+						dup2(fd, 1);
+						close(fd);
+						write(1, "Output do id ", strlen("Output do id "));
+						write(1, sp, strlen(sp));
+						write(1, ":\n", 2);
+					}
 					execvp(comand[0], comand);
 					perror("Comando inválido.");
 					exit(-1);
