@@ -17,6 +17,6 @@ void main(int argc, char* argv[]){
 	strcat(buffer, argv[2]);
 	strcat(buffer, "\n");
 	write(1, buffer, strlen(buffer));
-	write(1, "\n", 1);
+	write(1, "\0 ", 1);
 	exit(0);
 }

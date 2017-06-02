@@ -118,7 +118,7 @@ Nodo initNodo(int id, char** cm){
 			buffer[r] = '\0';
 			fanOut[0] = '\0';
 			int i;
-			if(buffer[0]!='+'){
+			if(buffer[0]!='+' && buffer[0]!='-'){
 				inp_count++;
 				char aux[10];
 				buffer[r] = '\0';
@@ -164,18 +164,35 @@ Nodo initNodo(int id, char** cm){
 				wait(NULL);
 			}
 			else{
-				char** cmd = (char**)malloc(sizeof(char[1024])*10);
-				i=0;
-				cmd[i] = strtok(buffer, " \n\0");
-				while(cmd[i] != NULL){
-					i++;
-					cmd[i] = strtok(NULL, " \n\0");
+				if(buffer[0] == '+'){
+					char** cmd = (char**)malloc(sizeof(char[1024])*10);
+					i=0;
+					cmd[i] = strtok(buffer, " \n\0");
+					while(cmd[i] != NULL){
+						i++;
+						cmd[i] = strtok(NULL, " \n\0");
+					}
+					i=1;
+					while( cmd[i] != NULL){
+						n -> writer[n-> sizeW] = atoi(cmd[i]);
+						n -> sizeW++;
+						i++;
+					}
 				}
-				i=1;
-				while( cmd[i] != NULL){
-					n -> writer[n-> sizeW] = atoi(cmd[i]);
-					n -> sizeW++;
-					i++;
+				else{
+					char** cmd = (char**)malloc(sizeof(char[1024])*10);
+					i=0;
+					cmd[i] = strtok(buffer, " \n\0");
+					while(cmd[i] != NULL){
+						i++;
+						cmd[i] = strtok(NULL, " \n\0");
+					}
+					for(i=0; i < n -> sizeW; i++){
+						if(n -> writer[i] == atoi(cmd[1])){
+							rem(n -> writer, i, n -> sizeW);
+							n -> sizeW--;
+						}
+					}
 				}
 			}
 		}
@@ -208,14 +225,17 @@ void connect(Nodo* nodos, int id, char** ids){
 
 void disconnect(Nodo* nodos, int id, int id2){
 	int i;
+	char aux[1024];
+	char buffer[1024];
 	Nodo n = nodos[id];
 	Nodo n2 = nodos[id2];
-	for(i=0; i < n -> sizeW; i++){
-		if(n -> writer[i] == n2 -> pipe[0]){
-			rem(n -> writer, i, n -> sizeW);
-			n -> sizeW--;
-		}
-	}
+	buffer[0] = '-';
+	buffer[1] = '\0';
+	sprintf(aux, "%d", n2 -> pipe[1]);
+	strcat(buffer, " ");
+	strcat(buffer, aux);
+	printf("%s\n", buffer);
+	write(n->pipe[1], buffer, strlen(buffer)+1);
 }
 
 
@@ -227,40 +247,45 @@ int main(){
 	char buffer[1024];
 	int pid=0;
 	char **cmd = (char**) malloc(sizeof(char[1024])*64);
-	while((c = readln(0, buffer, 1024))){
-		buffer[c]='\0';
-		i=0;
-		cmd[i] = strtok(buffer, " \n\0");
-		while(cmd[i] != NULL){
-			i++;
-			cmd[i] = strtok(NULL, " \n\0");
-		}
-		i=0;
-		/*while(cmd[i] != NULL){
-			printf("cmd[%d] -> %s\n",i, cmd[i]);
-			i++;
-		}*/
-		if(!strcmp(cmd[0], "node")){
-			if(size%10==0 && size != 10)
-				nodos = (Nodo*) realloc(nodos,sizeof(struct nodo)*(size+10));
-			nodos[atoi(cmd[1])] = initNodo(atoi(cmd[1]), &cmd[2]);
-			size++;
-			if(pid!=0)
-				kill(pid, 9);
-			pid=fork();
-			if(pid==0) fanout();
-		}
-		if(!strcmp(cmd[0], "connect")){
-			connect(nodos, atoi(cmd[1]), &cmd[2]);
-		}
-		if(!strcmp(cmd[0], "inject")){
-			Nodo nodo = nodos[atoi(cmd[1])];
-			i=2;
-			while( cmd[i] != NULL ){
-				write( nodo-> pipe[1] , cmd[i], strlen(cmd[i])+1);
+	while(1){
+		while((c = readln(0, buffer, 1024))){
+			buffer[c]='\0';
+			i=0;
+			cmd[i] = strtok(buffer, " \n\0");
+			while(cmd[i] != NULL){
 				i++;
+				cmd[i] = strtok(NULL, " \n\0");
+			}
+			i=0;
+			if(!strcmp(cmd[0], "node")){
+				if(size%10==0 && size != 10)
+					nodos = (Nodo*) realloc(nodos,sizeof(struct nodo)*(size+10));
+				nodos[atoi(cmd[1])] = initNodo(atoi(cmd[1]), &cmd[2]);
+				size++;
+				if(pid!=0)
+					kill(pid, 9);
+				pid=fork();
+				if(pid==0) fanout();
+			}
+			if(!strcmp(cmd[0], "connect")){
+				connect(nodos, atoi(cmd[1]), &cmd[2]);
+			}
+			if(!strcmp(cmd[0], "inject")){
+				Nodo nodo = nodos[atoi(cmd[1])];
+				i=2;
+				while( cmd[i] != NULL ){
+					write( nodo-> pipe[1] , cmd[i], strlen(cmd[i])+1);
+					i++;
+				}
+			}
+			if(!strcmp(cmd[0], "disconnect")){
+				disconnect(nodos, atoi(cmd[1]), atoi(cmd[2]));
 			}
 		}
+		printf("Deseja sair do programa? y or ENTER for yes.\n");
+		c = readln(0, buffer, 1024);
+		if(buffer[0]=='y' || c==0)
+			break;
 	}
 	sleep(1);
 	for(i=0; i < size; i++){

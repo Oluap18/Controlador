@@ -48,6 +48,6 @@ void main(int argc, char* argv[]){
 		cmd[++i] = strtok(NULL, ":\n");
 	if(parse(argv[3], atoi(cmd[coluna1-1]), atoi(cmd[coluna2-1])))
 		write(1, temp, strlen(temp));
-	write(1, "\n", 1);
+	write(1, "\0 ", 1);
 	exit(0);
 }
